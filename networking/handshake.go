@@ -2,9 +2,9 @@ package networking
 
 import (
 	"errors"
-	"fmt"
 	"github.com/aang114/bitcoin-node/constants"
 	"github.com/aang114/bitcoin-node/message"
+	"log"
 	"math/rand"
 	"net"
 	"time"
@@ -83,7 +83,7 @@ func exchangeVersionMessage(conn *net.TCPConn, services message.Services, receiv
 		return errors.New("protocol version not supported")
 	}
 
-	fmt.Printf("exchanged version message between localAddr (%+v) and remoteAddr (%+v)\n", localTcpAddr, remoteTcpAddr)
+	log.Printf("exchanged version message between localAddr (%+v) and remoteAddr (%+v)\n", localTcpAddr, remoteTcpAddr)
 
 	return nil
 }
@@ -116,27 +116,26 @@ func exchangeVerackMessage(conn *net.TCPConn) error {
 		return errors.New("invalid Magic")
 	}
 
-	fmt.Println("exchanged verack message")
+	log.Println("exchanged verack message")
 
 	return nil
 }
 
-func PerformHandshake(remoteAddr net.TCPAddr, services message.Services, receivingServices message.Services) error {
-	fmt.Printf("performing handshake with remoteAddr %+v\n", remoteAddr)
+func PerformHandshake(remoteAddr net.TCPAddr, services message.Services, receivingServices message.Services) (*net.TCPConn, error) {
+	log.Printf("performing handshake with remoteAddr %+v\n", remoteAddr)
 	conn, err := net.DialTCP("tcp", nil, &remoteAddr)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	defer conn.Close()
 
 	err = exchangeVersionMessage(conn, services, receivingServices)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	err = exchangeVerackMessage(conn)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return conn, nil
 }

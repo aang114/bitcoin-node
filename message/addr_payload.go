@@ -66,8 +66,6 @@ func (g *AddrPayload) Encode() ([]byte, error) {
 }
 
 func decodeAddrPayload(r io.Reader) (*AddrPayload, error) {
-	//answer, _ := io.ReadAll(r)
-	//fmt.Println("answer", hex.EncodeToString(answer))
 	addrCount, err := decodeVarInt(r)
 	if err != nil {
 		return nil, err
