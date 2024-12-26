@@ -52,6 +52,41 @@ func TestMessage_Encode(t *testing.T) {
 		assert.Equal(t, expected, encoded)
 	})
 
+	t.Run("getaddr message should encode", func(t *testing.T) {
+		// Equivalent to the hexdump example of verack message (https://en.bitcoin.it/wiki/Protocol_documentation#verack), apart from the command name
+		expected, err := hex.DecodeString("F9BEB4D9676574616464720000000000000000005DF6E0E2")
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+
+		msg, err := message.NewGetAddrMessage()
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+		encoded, err := msg.Encode()
+
+		assert.NoError(t, err)
+		assert.Equal(t, expected, encoded)
+	})
+
+	t.Run("addr message should encode", func(t *testing.T) {
+		// Hexdump example of addr message taken from https://en.bitcoin.it/wiki/Protocol_documentation#addr
+		expected, err := hex.DecodeString("F9BEB4D96164647200000000000000001F000000ED52399B01E215104D010000000000000000000000000000000000FFFF0A000001208D")
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+
+		address := message.NewAddress(1292899810, *message.NewNetworkAddress(message.NodeNetwork, net.ParseIP("10.0.0.1"), 8333))
+		msg, err := message.NewAddrMessage([]message.Address{*address})
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+		encoded, err := msg.Encode()
+
+		assert.NoError(t, err)
+		assert.Equal(t, expected, encoded)
+	})
+
 }
 
 func TestDecodeMessage(t *testing.T) {
@@ -88,6 +123,41 @@ func TestDecodeMessage(t *testing.T) {
 
 		// Hexdump example of verack message taken from https://en.bitcoin.it/wiki/Protocol_documentation#verack
 		encoded, err := hex.DecodeString("F9BEB4D976657261636B000000000000000000005DF6E0E2")
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+		decodedMsg, err := message.DecodeMessage(bytes.NewReader(encoded))
+
+		assert.NoError(t, err)
+		assert.Equal(t, expected, decodedMsg)
+	})
+
+	t.Run("addr message should decode", func(t *testing.T) {
+		address := message.NewAddress(1292899810, *message.NewNetworkAddress(message.NodeNetwork, net.ParseIP("10.0.0.1"), 8333))
+		expected, err := message.NewAddrMessage([]message.Address{*address})
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+
+		// Hexdump example of addr message taken from https://en.bitcoin.it/wiki/Protocol_documentation#addr
+		encoded, err := hex.DecodeString("F9BEB4D96164647200000000000000001F000000ED52399B01E215104D010000000000000000000000000000000000FFFF0A000001208D")
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+		decodedMsg, err := message.DecodeMessage(bytes.NewReader(encoded))
+
+		assert.NoError(t, err)
+		assert.Equal(t, expected, decodedMsg)
+	})
+
+	t.Run("getaddr message should decode", func(t *testing.T) {
+		expected, err := message.NewGetAddrMessage()
+		if err != nil {
+			t.Fatalf("Unexpected error: %v", err)
+		}
+
+		// Equivalent to the hexdump example of verack message (https://en.bitcoin.it/wiki/Protocol_documentation#verack), apart from the command name
+		encoded, err := hex.DecodeString("F9BEB4D9676574616464720000000000000000005DF6E0E2")
 		if err != nil {
 			t.Fatalf("Unexpected error: %v", err)
 		}

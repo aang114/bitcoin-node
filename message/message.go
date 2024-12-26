@@ -22,6 +22,8 @@ var (
 var (
 	VersionCommand = CommandName{'v', 'e', 'r', 's', 'i', 'o', 'n'}
 	VerackCommand  = CommandName{'v', 'e', 'r', 'a', 'c', 'k'}
+	GetAddrCommand = CommandName{'g', 'e', 't', 'a', 'd', 'd', 'r'}
+	AddrCommand    = CommandName{'a', 'd', 'd', 'r'}
 )
 
 type CommandName [commandNameLength]byte
@@ -102,6 +104,16 @@ func DecodeMessage(r io.Reader) (*Message, error) {
 			return nil, ErrInvalidPayloadLength
 		}
 		payload = &VerackPayload{}
+	case AddrCommand:
+		payload, err = decodeAddrPayload(bytes.NewReader(encodedPayload))
+		if err != nil {
+			return nil, err
+		}
+	case GetAddrCommand:
+		if len(encodedPayload) != 0 {
+			return nil, ErrInvalidPayloadLength
+		}
+		payload = &GetAddrPayload{}
 	default:
 		//  TODO error
 		return nil, errors.New(fmt.Sprintf("unknown commnad name: %s", header.Command))
