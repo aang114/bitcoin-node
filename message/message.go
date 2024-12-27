@@ -20,10 +20,15 @@ var (
 )
 
 var (
-	VersionCommand = CommandName{'v', 'e', 'r', 's', 'i', 'o', 'n'}
-	VerackCommand  = CommandName{'v', 'e', 'r', 'a', 'c', 'k'}
-	GetAddrCommand = CommandName{'g', 'e', 't', 'a', 'd', 'd', 'r'}
-	AddrCommand    = CommandName{'a', 'd', 'd', 'r'}
+	VersionCommand   = CommandName{'v', 'e', 'r', 's', 'i', 'o', 'n'}
+	VerackCommand    = CommandName{'v', 'e', 'r', 'a', 'c', 'k'}
+	GetAddrCommand   = CommandName{'g', 'e', 't', 'a', 'd', 'd', 'r'}
+	AddrCommand      = CommandName{'a', 'd', 'd', 'r'}
+	GetBlocksCommand = CommandName{'g', 'e', 't', 'b', 'l', 'o', 'c', 'k', 's'}
+	InvCommand       = CommandName{'i', 'n', 'v'}
+	GetDataCommand   = CommandName{'g', 'e', 't', 'd', 'a', 't', 'a'}
+	BlockCommand     = CommandName{'b', 'l', 'o', 'c', 'k'}
+	TxCommand        = CommandName{'t', 'x'}
 )
 
 type CommandName [commandNameLength]byte
@@ -96,9 +101,6 @@ func DecodeMessage(r io.Reader) (*Message, error) {
 	switch header.Command {
 	case VersionCommand:
 		payload, err = decodeVersionPayload(bytes.NewReader(encodedPayload))
-		if err != nil {
-			return nil, err
-		}
 	case VerackCommand:
 		if len(encodedPayload) != 0 {
 			return nil, ErrInvalidPayloadLength
@@ -106,17 +108,27 @@ func DecodeMessage(r io.Reader) (*Message, error) {
 		payload = &VerackPayload{}
 	case AddrCommand:
 		payload, err = decodeAddrPayload(bytes.NewReader(encodedPayload))
-		if err != nil {
-			return nil, err
-		}
 	case GetAddrCommand:
 		if len(encodedPayload) != 0 {
 			return nil, ErrInvalidPayloadLength
 		}
 		payload = &GetAddrPayload{}
+	case GetBlocksCommand:
+		payload, err = decodeGetBlocksPayload(bytes.NewReader(encodedPayload))
+	case InvCommand:
+		payload, err = decodeInvPayload(bytes.NewReader(encodedPayload))
+	case GetDataCommand:
+		payload, err = decodeGetDataPayload(bytes.NewReader(encodedPayload))
+	case TxCommand:
+		payload, err = decodeTxPayload(bytes.NewReader(encodedPayload))
+	case BlockCommand:
+		payload, err = decodeBlockPayload(bytes.NewReader(encodedPayload))
 	default:
 		//  TODO error
-		return nil, errors.New(fmt.Sprintf("unknown commnad name: %s", header.Command))
+		return nil, errors.New(fmt.Sprintf("unknown command name: %s", header.Command))
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	return &Message{
