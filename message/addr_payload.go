@@ -48,7 +48,10 @@ func (g *AddrPayload) Encode() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	buffer.Write(addrCountEncoded)
+	_, err = buffer.Write(addrCountEncoded)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, a := range g.AddressList {
 		err = binary.Write(buffer, binary.LittleEndian, a.Timestamp)
@@ -59,7 +62,10 @@ func (g *AddrPayload) Encode() ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		buffer.Write(netAddrEncoded)
+		_, err = buffer.Write(netAddrEncoded)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return buffer.Bytes(), nil

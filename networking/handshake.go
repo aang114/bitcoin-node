@@ -83,7 +83,7 @@ func exchangeVersionMessage(conn *net.TCPConn, services message.Services, receiv
 		return errors.New("protocol version not supported")
 	}
 
-	log.Printf("exchanged version message between localAddr (%+v) and remoteAddr (%+v)\n", localTcpAddr, remoteTcpAddr)
+	log.Printf("🔄 Exchanged version message with peer %s", conn.RemoteAddr())
 
 	return nil
 }
@@ -116,18 +116,22 @@ func exchangeVerackMessage(conn *net.TCPConn) error {
 		return errors.New("invalid Magic")
 	}
 
-	log.Println("exchanged verack message")
+	log.Printf("🔄 Exchanged verack message with peer %s", conn.RemoteAddr())
 
 	return nil
 }
 
-func PerformHandshake(remoteAddr net.TCPAddr, services message.Services, receivingServices message.Services) (*net.TCPConn, error) {
-	log.Printf("performing handshake with remoteAddr %+v\n", remoteAddr)
-	conn, err := net.DialTCP("tcp", nil, &remoteAddr)
+func PerformHandshake(remoteAddr *net.TCPAddr, tcpTimeout time.Duration, services message.Services, receivingServices message.Services) (*net.TCPConn, error) {
+	log.Printf("🤝 Performing handshake with peer %s", remoteAddr.String())
+	//conn, err := net.DialTCP("tcp", nil, &remoteAddr)
+	connI, err := net.DialTimeout("tcp", remoteAddr.String(), tcpTimeout)
 	if err != nil {
 		return nil, err
 	}
-
+	conn, ok := connI.(*net.TCPConn)
+	if !ok {
+		return nil, errors.New("Could not convert net.Conn to *net.TCPConn")
+	}
 	err = exchangeVersionMessage(conn, services, receivingServices)
 	if err != nil {
 		return nil, err
@@ -136,6 +140,8 @@ func PerformHandshake(remoteAddr net.TCPAddr, services message.Services, receivi
 	if err != nil {
 		return nil, err
 	}
+
+	log.Printf("✅ Handshake successful with peer %s!", conn.RemoteAddr())
 
 	return conn, nil
 }

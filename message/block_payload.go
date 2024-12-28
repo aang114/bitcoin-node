@@ -2,6 +2,7 @@ package message
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/binary"
 	"io"
 )
@@ -121,7 +122,6 @@ func decodeBlockPayload(r io.Reader) (*BlockPayload, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = binary.Read(r, binary.LittleEndian, &b.Transactions)
 	transactionsCount, err := decodeVarInt(r)
 	if err != nil {
 		return nil, err
@@ -136,4 +136,39 @@ func decodeBlockPayload(r io.Reader) (*BlockPayload, error) {
 	}
 
 	return &b, nil
+}
+
+// The SHA256 hash that identifies each block (and which must have a run of 0 bits) is calculated from the first 6 fields of this structure (version, prev_block, merkle_root, timestamp, bits, nonce, and standard SHA256 padding, making two 64-byte chunks in all) and not from the complete block (https://en.bitcoin.it/wiki/Protocol_documentation#block)
+func (b *BlockPayload) GetBlockHash() (Hash256, error) {
+	buffer := new(bytes.Buffer)
+
+	err := binary.Write(buffer, binary.LittleEndian, b.Version)
+	if err != nil {
+		return Hash256{}, err
+	}
+	_, err = buffer.Write(b.PrevBlock[:])
+	if err != nil {
+		return Hash256{}, err
+	}
+	_, err = buffer.Write(b.MerkleRoot[:])
+	if err != nil {
+		return Hash256{}, err
+	}
+	err = binary.Write(buffer, binary.LittleEndian, b.Timestamp)
+	if err != nil {
+		return Hash256{}, err
+	}
+	err = binary.Write(buffer, binary.LittleEndian, b.Bits)
+	if err != nil {
+		return Hash256{}, err
+	}
+	err = binary.Write(buffer, binary.LittleEndian, b.Nonce)
+	if err != nil {
+		return Hash256{}, err
+	}
+
+	hash := sha256.Sum256(buffer.Bytes())
+	hash = sha256.Sum256(hash[:])
+
+	return hash, nil
 }

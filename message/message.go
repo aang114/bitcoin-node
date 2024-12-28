@@ -19,6 +19,14 @@ var (
 	ErrInvalidPayloadLength = errors.New("invalid Payload length")
 )
 
+type ErrUnknownCommandName struct {
+	Command CommandName
+}
+
+func (e *ErrUnknownCommandName) Error() string {
+	return fmt.Sprintf("unknown command name: %s", e.Command)
+}
+
 var (
 	VersionCommand   = CommandName{'v', 'e', 'r', 's', 'i', 'o', 'n'}
 	VerackCommand    = CommandName{'v', 'e', 'r', 'a', 'c', 'k'}
@@ -29,6 +37,8 @@ var (
 	GetDataCommand   = CommandName{'g', 'e', 't', 'd', 'a', 't', 'a'}
 	BlockCommand     = CommandName{'b', 'l', 'o', 'c', 'k'}
 	TxCommand        = CommandName{'t', 'x'}
+	PingCommand      = CommandName{'p', 'i', 'n', 'g'}
+	PongCommand      = CommandName{'p', 'o', 'n', 'g'}
 )
 
 type CommandName [commandNameLength]byte
@@ -123,9 +133,12 @@ func DecodeMessage(r io.Reader) (*Message, error) {
 		payload, err = decodeTxPayload(bytes.NewReader(encodedPayload))
 	case BlockCommand:
 		payload, err = decodeBlockPayload(bytes.NewReader(encodedPayload))
+	case PingCommand:
+		payload, err = decodePingPayload(bytes.NewReader(encodedPayload))
+	case PongCommand:
+		payload, err = decodePongPayload(bytes.NewReader(encodedPayload))
 	default:
-		//  TODO error
-		return nil, errors.New(fmt.Sprintf("unknown command name: %s", header.Command))
+		return nil, &ErrUnknownCommandName{Command: header.Command}
 	}
 	if err != nil {
 		return nil, err

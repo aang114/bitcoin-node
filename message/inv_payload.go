@@ -53,14 +53,16 @@ func (p *InvPayload) Encode() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	buffer.Write(countEncoded)
+	_, err = buffer.Write(countEncoded)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, i := range p.InventoryList {
 		err = binary.Write(buffer, binary.LittleEndian, i.Type)
 		if err != nil {
 			return nil, err
 		}
-		// TODO - are the 32 bytes put in little endian order or as is?
 		_, err = buffer.Write(i.Hash[:])
 		if err != nil {
 			return nil, err

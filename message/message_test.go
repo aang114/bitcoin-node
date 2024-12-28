@@ -87,7 +87,7 @@ func TestMessage_Encode(t *testing.T) {
 		assert.Equal(t, expected, encoded)
 	})
 
-	t.Run("getblocks message should Encode", func(t *testing.T) {
+	t.Run("getblocks message should encode", func(t *testing.T) {
 		// Hexdump example of getblocks message taken from https://developer.bitcoin.org/reference/p2p_networking.html#getblocks
 		expected, err := hex.DecodeString("F9BEB4D9676574626C6F636B7300000065000000452A46487111010002D39F608A7775B537729884D4E6633BB2105E55A16A14D31B00000000000000005C3E6403D40837110A2E8AFB602B1C01714BDA7CE23BEA0A00000000000000000000000000000000000000000000000000000000000000000000000000000000")
 		if err != nil {
@@ -146,7 +146,7 @@ func TestMessage_Encode(t *testing.T) {
 		assert.Equal(t, expected, encoded)
 	})
 
-	t.Run("getdata message should Encode", func(t *testing.T) {
+	t.Run("getdata message should encode", func(t *testing.T) {
 		// Equivalent to the hexdump example of inv message (https://en.bitcoin.it/wiki/Protocol_documentation#inv), apart from the command name
 		expected, err := hex.DecodeString("F9BEB4D9676574646174610000000000490000006467A0900201000000DE55FFD709AC1F5DC509A0925D0B1FC442CA034F224732E429081DA1B621F55A0100000091D36D997037E08018262978766F24B8A055AAF1D872E94AE85E9817B2C68DC7")
 		if err != nil {

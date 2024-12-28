@@ -42,7 +42,7 @@ func (h *MessageHeader) encode() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	buffer.Write(h.Command[:])
+	_, err = buffer.Write(h.Command[:])
 	if err != nil {
 		return nil, err
 	}

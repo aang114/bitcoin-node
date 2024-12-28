@@ -4,8 +4,13 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
+	"errors"
+	"fmt"
 	"io"
 )
+
+// https://github.com/bitcoin/bitcoin/blob/3f826598a42dcc707b58224e94c394e30a42ceee/src/script/script.h#L31-L32
+const maxScriptSize = 10000
 
 type OutPoint struct {
 	// The hash of the referenced transaction.
@@ -106,7 +111,7 @@ func (t *TxPayload) Encode() ([]byte, error) {
 	}
 	if len(t.TransactionWitnesses) > 0 {
 		// If present, flag is always 0001, and indicates the presence of witness data
-		flag := []uint8{0x00, 0x01}
+		flag := []byte{0x00, 0x01}
 		_, err = buffer.Write(flag)
 		if err != nil {
 			return nil, err
@@ -193,7 +198,7 @@ func decodeTxPayload(reader io.Reader) (*TxPayload, error) {
 		return nil, err
 	}
 	flag := false
-	if bytes.Equal(buf, []byte{0x00, 0x011}) {
+	if bytes.Equal(buf, []byte{0x00, 0x01}) {
 		flag = true
 		_, err = io.ReadFull(r, buf)
 		if err != nil {
@@ -290,7 +295,7 @@ func (t *TxIn) Encode() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = binary.Write(buffer, binary.LittleEndian, scriptLengthEncoded)
+	_, err = buffer.Write(scriptLengthEncoded)
 	if err != nil {
 		return nil, err
 	}
@@ -316,6 +321,10 @@ func decodeTxIn(r io.Reader) (*TxIn, error) {
 	scriptLength, err := decodeVarInt(r)
 	if err != nil {
 		return nil, err
+	}
+	//log.Printf("scriptLength is %d", scriptLength)
+	if scriptLength > maxScriptSize {
+		return nil, errors.New(fmt.Sprintf("signatureScript (length: %d) exceeded max length", scriptLength))
 	}
 	t.SignatureScript = make([]byte, scriptLength)
 	_, err = io.ReadFull(r, t.SignatureScript)
@@ -361,6 +370,10 @@ func decodeTxOut(r io.Reader) (*TxOut, error) {
 	pkScriptLength, err := decodeVarInt(r)
 	if err != nil {
 		return nil, err
+	}
+	//log.Printf("pkScriptLength is %d", pkScriptLength)
+	if pkScriptLength > maxScriptSize {
+		return nil, errors.New(fmt.Sprintf("pkScript (length %d) exceeded max length", pkScriptLength))
 	}
 	t.PkScript = make([]byte, pkScriptLength)
 	_, err = io.ReadFull(r, t.PkScript)

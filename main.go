@@ -1,10 +1,12 @@
 package main
 
 import (
+	"github.com/aang114/bitcoin-node/constants"
 	"github.com/aang114/bitcoin-node/message"
 	"github.com/aang114/bitcoin-node/networking"
 	"log"
 	"net"
+	"time"
 )
 
 func init() {
@@ -17,30 +19,21 @@ func main() {
 	// https://bitnodes.io/nodes/73.65.210.23-8333/
 	remoteAddr := net.TCPAddr{IP: net.ParseIP("73.65.210.23"), Port: 8333}
 
-	conn, err := networking.PerformHandshake(remoteAddr, message.NodeNetwork, message.NodeNetwork)
+	node := networking.NewNode(
+		uint32(constants.ProtocolVersion),
+		message.NodeNetwork,
+		1,
+		20*time.Second,
+		10*time.Second,
+		10*time.Second,
+	)
+
+	_, err := node.AddPeer(&remoteAddr, message.NodeNetwork)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("Adding Peer failed with error: %s", err)
 	}
 
-	peer := networking.NewPeerNode(conn)
-	go peer.Start()
+	go node.Start()
 
-	addressListCh, err := peer.SendGetAddrMsg()
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	addressList, ok := <-addressListCh
-	if !ok {
-		log.Fatalln("channel closed before sending address list")
-	}
-	log.Println("addressList:", addressList)
-
-	for _, address := range addressList {
-		tcpAddr := net.TCPAddr{IP: address.NetworkAddress.IpAddress[:], Port: int(address.NetworkAddress.Port)}
-		log.Println("address:", tcpAddr)
-	}
-
-	<-peer.QuitCh
-
+	<-node.QuitCh
 }
