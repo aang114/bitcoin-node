@@ -50,11 +50,16 @@ func NewNetworkAddress(services Services, ipAddress net.IP, port uint16) *Networ
 func (n *NetworkAddress) encode() ([]byte, error) {
 	buffer := new(bytes.Buffer)
 
+	var ipAddressBytes [16]byte
+	if ipAddress := n.IpAddress.To16(); ipAddress != nil {
+		ipAddressBytes = [16]byte(n.IpAddress.To16())
+	}
+
 	err := binary.Write(buffer, binary.LittleEndian, n.Services)
 	if err != nil {
 		return nil, err
 	}
-	err = binary.Write(buffer, binary.BigEndian, n.IpAddress.To16())
+	err = binary.Write(buffer, binary.BigEndian, ipAddressBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +78,7 @@ func decodeNetworkAddress(r io.Reader) (*NetworkAddress, error) {
 	if err != nil {
 		return nil, err
 	}
-	var ipAddressBytes = make([]byte, 16)
+	ipAddressBytes := make([]byte, 16)
 	_, err = io.ReadFull(r, ipAddressBytes)
 	if err != nil {
 		return nil, err
