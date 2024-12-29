@@ -28,17 +28,19 @@ func (e *ErrUnknownCommandName) Error() string {
 }
 
 var (
-	VersionCommand   = CommandName{'v', 'e', 'r', 's', 'i', 'o', 'n'}
-	VerackCommand    = CommandName{'v', 'e', 'r', 'a', 'c', 'k'}
-	GetAddrCommand   = CommandName{'g', 'e', 't', 'a', 'd', 'd', 'r'}
-	AddrCommand      = CommandName{'a', 'd', 'd', 'r'}
-	GetBlocksCommand = CommandName{'g', 'e', 't', 'b', 'l', 'o', 'c', 'k', 's'}
-	InvCommand       = CommandName{'i', 'n', 'v'}
-	GetDataCommand   = CommandName{'g', 'e', 't', 'd', 'a', 't', 'a'}
-	BlockCommand     = CommandName{'b', 'l', 'o', 'c', 'k'}
-	TxCommand        = CommandName{'t', 'x'}
-	PingCommand      = CommandName{'p', 'i', 'n', 'g'}
-	PongCommand      = CommandName{'p', 'o', 'n', 'g'}
+	VersionCommand    = CommandName{'v', 'e', 'r', 's', 'i', 'o', 'n'}
+	VerackCommand     = CommandName{'v', 'e', 'r', 'a', 'c', 'k'}
+	WtxidRelayCommand = CommandName{'w', 't', 'x', 'i', 'd', 'r', 'e', 'l', 'a', 'y'}
+	SendAddrV2Command = CommandName{'s', 'e', 'n', 'd', 'a', 'd', 'd', 'r', 'v', '2'}
+	GetAddrCommand    = CommandName{'g', 'e', 't', 'a', 'd', 'd', 'r'}
+	AddrCommand       = CommandName{'a', 'd', 'd', 'r'}
+	GetBlocksCommand  = CommandName{'g', 'e', 't', 'b', 'l', 'o', 'c', 'k', 's'}
+	InvCommand        = CommandName{'i', 'n', 'v'}
+	GetDataCommand    = CommandName{'g', 'e', 't', 'd', 'a', 't', 'a'}
+	BlockCommand      = CommandName{'b', 'l', 'o', 'c', 'k'}
+	TxCommand         = CommandName{'t', 'x'}
+	PingCommand       = CommandName{'p', 'i', 'n', 'g'}
+	PongCommand       = CommandName{'p', 'o', 'n', 'g'}
 )
 
 type CommandName [commandNameLength]byte
@@ -116,6 +118,16 @@ func DecodeMessage(r io.Reader) (*Message, error) {
 			return nil, ErrInvalidPayloadLength
 		}
 		payload = &VerackPayload{}
+	case WtxidRelayCommand:
+		if len(encodedPayload) != 0 {
+			return nil, ErrInvalidPayloadLength
+		}
+		payload = &WtxidRelayPayload{}
+	case SendAddrV2Command:
+		if len(encodedPayload) != 0 {
+			return nil, ErrInvalidPayloadLength
+		}
+		payload = &SendAddrV2Payload{}
 	case AddrCommand:
 		payload, err = decodeAddrPayload(bytes.NewReader(encodedPayload))
 	case GetAddrCommand:

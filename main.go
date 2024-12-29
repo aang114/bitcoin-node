@@ -16,13 +16,13 @@ func init() {
 func main() {
 	log.Println("Hello World")
 
-	// https://bitnodes.io/nodes/73.65.210.23-8333/
-	remoteAddr := net.TCPAddr{IP: net.ParseIP("73.65.210.23"), Port: 8333}
+	// https://bitnodes.io/nodes/46.166.142.2:8333/
+	remoteAddr := net.TCPAddr{IP: net.ParseIP("46.166.142.2"), Port: 8333}
 
 	node := networking.NewNode(
 		uint32(constants.ProtocolVersion),
 		message.NodeNetwork,
-		1,
+		5,
 		20*time.Second,
 		10*time.Second,
 		10*time.Second,
