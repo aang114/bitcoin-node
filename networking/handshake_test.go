@@ -26,8 +26,7 @@ func receiveMsg(t *testing.T, conn net.Conn) *message.Message {
 	return msg
 }
 
-type HandshakeTestSuite struct {
-	suite.Suite
+type HandshakeData struct {
 	peerAddr                       net.TCPAddr
 	tcpTimeout                     time.Duration
 	peerVersionMsg                 *message.Message
@@ -36,55 +35,68 @@ type HandshakeTestSuite struct {
 	peerVersionMsgWithVersion70016 *message.Message
 }
 
+func CreateHandshakeData(t *testing.T) *HandshakeData {
+	h := HandshakeData{}
+
+	h.peerAddr = net.TCPAddr{IP: net.ParseIP("127.0.0.1"), Port: 5000}
+	h.tcpTimeout = 10 * time.Second
+
+	var err error
+	h.peerVersionMsg, err = message.NewVersionMessage(
+		70015,
+		message.NodeNetwork,
+		100,
+		*message.NewNetworkAddress(message.NodeNetwork, net.ParseIP("0.0.0.0"), uint16(0)),
+		*message.NewNetworkAddress(message.NodeNetwork, h.peerAddr.IP, uint16(h.peerAddr.Port)),
+		200,
+		"/Peer:0.0.1",
+		300,
+		false,
+	)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	h.verackMsg, err = message.NewVerackMessage()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	h.wtxidrelayMsg, err = message.NewWtxidRelayMessage()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// version msg with version ≥ 70016
+	h.peerVersionMsgWithVersion70016, err = message.NewVersionMessage(
+		70016,
+		message.NodeNetwork,
+		100,
+		*message.NewNetworkAddress(message.NodeNetwork, net.ParseIP("0.0.0.0"), uint16(0)),
+		*message.NewNetworkAddress(message.NodeNetwork, h.peerAddr.IP, uint16(h.peerAddr.Port)),
+		200,
+		"/Peer:0.0.1",
+		300,
+		false,
+	)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	return &h
+}
+
+type HandshakeTestSuite struct {
+	suite.Suite
+	HandshakeData
+}
+
 func TestHandshakeTestSuite(t *testing.T) {
 	suite.Run(t, &HandshakeTestSuite{})
 }
 
 func (s *HandshakeTestSuite) SetupSuite() {
-	s.peerAddr = net.TCPAddr{IP: net.ParseIP("127.0.0.1"), Port: 5000}
-	s.tcpTimeout = 10 * time.Second
-
-	var err error
-	s.peerVersionMsg, err = message.NewVersionMessage(
-		70015,
-		message.NodeNetwork,
-		100,
-		*message.NewNetworkAddress(message.NodeNetwork, net.ParseIP("0.0.0.0"), uint16(0)),
-		*message.NewNetworkAddress(message.NodeNetwork, s.peerAddr.IP, uint16(s.peerAddr.Port)),
-		200,
-		"/Peer:0.0.1",
-		300,
-		false,
-	)
-	if err != nil {
-		s.FailNow(err.Error())
-	}
-
-	s.verackMsg, err = message.NewVerackMessage()
-	if err != nil {
-		s.FailNow(err.Error())
-	}
-
-	s.wtxidrelayMsg, err = message.NewWtxidRelayMessage()
-	if err != nil {
-		s.FailNow(err.Error())
-	}
-
-	// version msg with version ≥ 70016
-	s.peerVersionMsgWithVersion70016, err = message.NewVersionMessage(
-		70016,
-		message.NodeNetwork,
-		100,
-		*message.NewNetworkAddress(message.NodeNetwork, net.ParseIP("0.0.0.0"), uint16(0)),
-		*message.NewNetworkAddress(message.NodeNetwork, s.peerAddr.IP, uint16(s.peerAddr.Port)),
-		200,
-		"/Peer:0.0.1",
-		300,
-		false,
-	)
-	if err != nil {
-		s.FailNow(err.Error())
-	}
+	s.HandshakeData = *CreateHandshakeData(s.T())
 }
 
 func (s *HandshakeTestSuite) TestPerformHandshake_ShouldWork() {
