@@ -49,7 +49,7 @@ func (p *InvPayload) CommandName() CommandName {
 func (p *InvPayload) Encode() ([]byte, error) {
 	buffer := new(bytes.Buffer)
 
-	countEncoded, err := VarInt(len(p.InventoryList)).encode()
+	countEncoded, err := VarInt(len(p.InventoryList)).Encode()
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (p *InvPayload) Encode() ([]byte, error) {
 }
 
 func decodeInvPayload(r io.Reader) (*InvPayload, error) {
-	count, err := decodeVarInt(r)
+	count, err := DecodeVarInt(r)
 	if err != nil {
 		return nil, err
 	}

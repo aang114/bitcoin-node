@@ -124,7 +124,7 @@ func (v VersionPayload) Encode() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	userAgentLengthEncoded, err := VarInt(len(v.UserAgent)).encode()
+	userAgentLengthEncoded, err := VarInt(len(v.UserAgent)).Encode()
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +180,7 @@ func decodeVersionPayload(r io.Reader) (*VersionPayload, error) {
 		return nil, err
 	}
 
-	userAgentLen, err := decodeVarInt(r)
+	userAgentLen, err := DecodeVarInt(r)
 	if err != nil {
 		return nil, err
 	}

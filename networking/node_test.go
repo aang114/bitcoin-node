@@ -69,6 +69,7 @@ func setupNode(s *NodeTestSuite) {
 		70015,
 		message.NodeNetwork,
 		5,
+		constants.BlocksFileDirectory,
 		20*time.Second,
 		10*time.Second,
 		10*time.Second,

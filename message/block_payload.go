@@ -74,7 +74,7 @@ func (b *BlockPayload) Encode() ([]byte, error) {
 		return nil, err
 	}
 	transactionsCount := VarInt(len(b.Transactions))
-	encodedCount, err := transactionsCount.encode()
+	encodedCount, err := transactionsCount.Encode()
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (b *BlockPayload) Encode() ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func decodeBlockPayload(r io.Reader) (*BlockPayload, error) {
+func DecodeBlockPayload(r io.Reader) (*BlockPayload, error) {
 	b := BlockPayload{}
 	err := binary.Read(r, binary.LittleEndian, &b.Version)
 	if err != nil {
@@ -122,7 +122,7 @@ func decodeBlockPayload(r io.Reader) (*BlockPayload, error) {
 	if err != nil {
 		return nil, err
 	}
-	transactionsCount, err := decodeVarInt(r)
+	transactionsCount, err := DecodeVarInt(r)
 	if err != nil {
 		return nil, err
 	}

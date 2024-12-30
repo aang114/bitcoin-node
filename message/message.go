@@ -144,7 +144,7 @@ func DecodeMessage(r io.Reader) (*Message, error) {
 	case TxCommand:
 		payload, err = decodeTxPayload(bytes.NewReader(encodedPayload))
 	case BlockCommand:
-		payload, err = decodeBlockPayload(bytes.NewReader(encodedPayload))
+		payload, err = DecodeBlockPayload(bytes.NewReader(encodedPayload))
 	case PingCommand:
 		payload, err = decodePingPayload(bytes.NewReader(encodedPayload))
 	case PongCommand:

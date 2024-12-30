@@ -27,7 +27,7 @@ func (p *GetBlocksPayload) Encode() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	blockLocatorHashesCountEncoded, err := VarInt(len(p.BlockLocatorHashes)).encode()
+	blockLocatorHashesCountEncoded, err := VarInt(len(p.BlockLocatorHashes)).Encode()
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +56,7 @@ func decodeGetBlocksPayload(r io.Reader) (*GetBlocksPayload, error) {
 	if err != nil {
 		return nil, err
 	}
-	blockLocatorHashesCount, err := decodeVarInt(r)
+	blockLocatorHashesCount, err := DecodeVarInt(r)
 	if err != nil {
 		return nil, err
 	}

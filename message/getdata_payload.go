@@ -27,7 +27,7 @@ func NewGetDataMessage(inventoryList []Inventory) (*Message, error) {
 func (p *GetDataPayload) Encode() ([]byte, error) {
 	buffer := new(bytes.Buffer)
 
-	countEncoded, err := VarInt(len(p.InventoryList)).encode()
+	countEncoded, err := VarInt(len(p.InventoryList)).Encode()
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (p *GetDataPayload) Encode() ([]byte, error) {
 }
 
 func decodeGetDataPayload(r io.Reader) (*GetDataPayload, error) {
-	count, err := decodeVarInt(r)
+	count, err := DecodeVarInt(r)
 	if err != nil {
 		return nil, err
 	}

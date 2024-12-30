@@ -8,6 +8,7 @@ import (
 	"github.com/aang114/bitcoin-node/message"
 	"log"
 	"net"
+	"os"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -34,48 +35,51 @@ type BlockPayloadWithSender struct {
 }
 
 type Node struct {
-	mu               sync.RWMutex
-	protocolVersion  uint32
-	services         message.Services
-	minimumPeers     int
-	tickerDuration   time.Duration
-	tcpDialTimeout   time.Duration
-	getAddrWaitTime  time.Duration
-	peers            *SafeMap[*Peer, struct{}]
-	connectedAddrs   *SafeMap[TCPAddress, struct{}]
-	unconnectedAddrs *SafeMap[TCPAddress, struct{}]
-	blocks           *SafeSlice[*message.BlockPayload]
-	blockHashes      *SafeMap[message.Hash256, struct{}]
-	HasQuit          bool
-	QuitCh           chan struct{}
-	addPeersCh       chan struct{}
-	invMsgCh         chan *InvPayloadWithSender
-	blockMsgCh       chan *BlockPayloadWithSender
+	mu                  sync.RWMutex
+	protocolVersion     uint32
+	services            message.Services
+	minimumPeers        int
+	tickerDuration      time.Duration
+	tcpDialTimeout      time.Duration
+	getAddrWaitTime     time.Duration
+	blocksFileDirectory string
+	peers               *SafeMap[*Peer, struct{}]
+	connectedAddrs      *SafeMap[TCPAddress, struct{}]
+	unconnectedAddrs    *SafeMap[TCPAddress, struct{}]
+	blocks              *SafeSlice[*message.BlockPayload]
+	blockHashes         *SafeMap[message.Hash256, struct{}]
+	HasQuit             bool
+	QuitCh              chan struct{}
+	addPeersCh          chan struct{}
+	invMsgCh            chan *InvPayloadWithSender
+	blockMsgCh          chan *BlockPayloadWithSender
 }
 
 func NewNode(
 	protocolVersion uint32,
 	services message.Services,
 	minimumPeers int,
+	blocksFileDirectory string,
 	tickerDuration time.Duration,
 	tcpDialTimeout time.Duration,
 	getAddrWaitTime time.Duration,
 ) *Node {
 	n := Node{
-		protocolVersion:  protocolVersion,
-		services:         services,
-		minimumPeers:     minimumPeers,
-		tickerDuration:   tickerDuration,
-		tcpDialTimeout:   tcpDialTimeout,
-		getAddrWaitTime:  getAddrWaitTime,
-		peers:            NewSafeMap[*Peer, struct{}](),
-		connectedAddrs:   NewSafeMap[TCPAddress, struct{}](),
-		unconnectedAddrs: NewSafeMap[TCPAddress, struct{}](),
-		blocks:           NewSafeSlice[*message.BlockPayload](0),
-		blockHashes:      NewSafeMap[message.Hash256, struct{}](),
-		HasQuit:          false,
-		QuitCh:           make(chan struct{}),
-		addPeersCh:       make(chan struct{}, 1),
+		protocolVersion:     protocolVersion,
+		services:            services,
+		minimumPeers:        minimumPeers,
+		tickerDuration:      tickerDuration,
+		tcpDialTimeout:      tcpDialTimeout,
+		getAddrWaitTime:     getAddrWaitTime,
+		blocksFileDirectory: blocksFileDirectory,
+		peers:               NewSafeMap[*Peer, struct{}](),
+		connectedAddrs:      NewSafeMap[TCPAddress, struct{}](),
+		unconnectedAddrs:    NewSafeMap[TCPAddress, struct{}](),
+		blocks:              NewSafeSlice[*message.BlockPayload](0),
+		blockHashes:         NewSafeMap[message.Hash256, struct{}](),
+		HasQuit:             false,
+		QuitCh:              make(chan struct{}),
+		addPeersCh:          make(chan struct{}, 1),
 		// TODO - Decide on the channel buffer length
 		invMsgCh: make(chan *InvPayloadWithSender, minimumPeers),
 		// TODO - Decide on the channel buffer length
@@ -86,6 +90,19 @@ func NewNode(
 }
 
 func (n *Node) Start() {
+	err := n.readBlocksFromDisk()
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			log.Printf("File %s does not exist. Starting afresh...", n.blocksFileDirectory)
+		} else {
+			log.Printf("⚠️ Couldn't read the blocks in file %s due to error: %s. Quitting now...", n.blocksFileDirectory, err)
+			n.Quit()
+			return
+		}
+	} else {
+		log.Printf("💾 Successfully read %d blocks in file %s", n.blocks.Len(), n.blocksFileDirectory)
+	}
+
 	if n.peers.Len() < n.minimumPeers {
 		n.notifyThatPeersIsBelowMinPeers()
 	}
@@ -124,6 +141,13 @@ func (n *Node) Quit() {
 	}
 
 	close(n.QuitCh)
+
+	err := n.saveBlocksToDisk()
+	if err != nil {
+		log.Printf("⚠️ Could not save blocks due to error: %s", err)
+	} else {
+		log.Printf("💾 Successfully saved blocks to file %s", n.blocksFileDirectory)
+	}
 }
 
 func (n *Node) selectLoop() {
@@ -270,6 +294,75 @@ func (n *Node) handleBlockMsg(msg *BlockPayloadWithSender) error {
 
 	// since we know msg.Sender is historically responsive to "inv" requests, let's ask it for the missing blocks rather than a random peer
 	return n.sendGetBlockDataMsg(msg.Sender, missingBlockHashes)
+}
+
+func (n *Node) saveBlocksToDisk() error {
+	blocks := n.blocks.GetAll()
+	if len(blocks) == 0 {
+		return errors.New("no blocks to write to file")
+	}
+
+	f, err := os.Create(fmt.Sprintf("/tmp/%s", n.blocksFileDirectory))
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	blocksCountEncoded, err := message.VarInt(len(blocks)).Encode()
+	if err != nil {
+		return err
+	}
+	_, err = f.Write(blocksCountEncoded)
+	if err != nil {
+		return err
+	}
+
+	for _, block := range blocks {
+		blockEncoded, err := block.Encode()
+		if err != nil {
+			return err
+		}
+		_, err = f.Write(blockEncoded)
+		if err != nil {
+			return err
+		}
+	}
+
+	if err != nil {
+		return err
+	}
+
+	return os.Rename(fmt.Sprintf("/tmp/%s", n.blocksFileDirectory), n.blocksFileDirectory)
+}
+
+func (n *Node) readBlocksFromDisk() error {
+	f, err := os.Open(n.blocksFileDirectory)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	blocksCount, err := message.DecodeVarInt(f)
+	if err != nil {
+		return err
+	}
+	blocks := make([]*message.BlockPayload, blocksCount)
+	for i := range blocksCount {
+		block, err := message.DecodeBlockPayload(f)
+		if err != nil {
+			return err
+		}
+		blocks[i] = block
+	}
+
+	for _, block := range blocks {
+		err := n.addBlockToNode(block)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (n *Node) addPeersIfNecessary() error {

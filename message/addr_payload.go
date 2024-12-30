@@ -44,7 +44,7 @@ func (g AddrPayload) CommandName() CommandName {
 func (g *AddrPayload) Encode() ([]byte, error) {
 	buffer := new(bytes.Buffer)
 
-	addrCountEncoded, err := VarInt(len(g.AddressList)).encode()
+	addrCountEncoded, err := VarInt(len(g.AddressList)).Encode()
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func (g *AddrPayload) Encode() ([]byte, error) {
 }
 
 func decodeAddrPayload(r io.Reader) (*AddrPayload, error) {
-	addrCount, err := decodeVarInt(r)
+	addrCount, err := DecodeVarInt(r)
 	if err != nil {
 		return nil, err
 	}

@@ -5,9 +5,10 @@ import (
 )
 
 const (
-	ProtocolVersion   int32  = 70016
-	MainnetMagicValue        = uint32(0xD9B4BEF9)
-	UserAgent         string = "/bitcoin-node-go:0.0.1/"
+	ProtocolVersion     int32  = 70016
+	MainnetMagicValue          = uint32(0xD9B4BEF9)
+	UserAgent           string = "/bitcoin-node-go:0.0.1/"
+	BlocksFileDirectory string = "./blocks.dat"
 )
 
 // https://bitcoinexplorer.org/block/000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f

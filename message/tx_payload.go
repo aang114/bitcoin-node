@@ -118,7 +118,7 @@ func (t *TxPayload) Encode() ([]byte, error) {
 		}
 	}
 	txInputsCount := VarInt(len(t.TransactionInputs))
-	encodedCount, err := txInputsCount.encode()
+	encodedCount, err := txInputsCount.Encode()
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func (t *TxPayload) Encode() ([]byte, error) {
 		}
 	}
 	txOutputsCount := VarInt(len(t.TransactionOutputs))
-	encodedCount, err = txOutputsCount.encode()
+	encodedCount, err = txOutputsCount.Encode()
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +157,7 @@ func (t *TxPayload) Encode() ([]byte, error) {
 	}
 	if len(t.TransactionWitnesses) > 0 {
 		txWitnessesCount := VarInt(len(t.TransactionWitnesses))
-		encodedCount, err = txWitnessesCount.encode()
+		encodedCount, err = txWitnessesCount.Encode()
 		if err != nil {
 			return nil, err
 		}
@@ -205,7 +205,7 @@ func decodeTxPayload(reader io.Reader) (*TxPayload, error) {
 			return nil, err
 		}
 	}
-	txInputCount, err := decodeVarInt(r)
+	txInputCount, err := DecodeVarInt(r)
 	if err != nil {
 		return nil, err
 	}
@@ -217,7 +217,7 @@ func decodeTxPayload(reader io.Reader) (*TxPayload, error) {
 		}
 		t.TransactionInputs[i] = *txIn
 	}
-	txOutputCount, err := decodeVarInt(r)
+	txOutputCount, err := DecodeVarInt(r)
 	if err != nil {
 		return nil, err
 	}
@@ -230,7 +230,7 @@ func decodeTxPayload(reader io.Reader) (*TxPayload, error) {
 		t.TransactionOutputs[i] = *txOut
 	}
 	if flag {
-		txWitnessCount, err := decodeVarInt(r)
+		txWitnessCount, err := DecodeVarInt(r)
 		if err != nil {
 			return nil, err
 		}
@@ -291,7 +291,7 @@ func (t *TxIn) Encode() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	scriptLengthEncoded, err := VarInt(len(t.SignatureScript)).encode()
+	scriptLengthEncoded, err := VarInt(len(t.SignatureScript)).Encode()
 	if err != nil {
 		return nil, err
 	}
@@ -318,7 +318,7 @@ func decodeTxIn(r io.Reader) (*TxIn, error) {
 		return nil, err
 	}
 	t.PreviousOutput = *previousOutput
-	scriptLength, err := decodeVarInt(r)
+	scriptLength, err := DecodeVarInt(r)
 	if err != nil {
 		return nil, err
 	}
@@ -345,7 +345,7 @@ func (t *TxOut) Encode() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	pkScriptLengthEncoded, err := VarInt(len(t.PkScript)).encode()
+	pkScriptLengthEncoded, err := VarInt(len(t.PkScript)).Encode()
 	if err != nil {
 		return nil, err
 	}
@@ -367,7 +367,7 @@ func decodeTxOut(r io.Reader) (*TxOut, error) {
 	if err != nil {
 		return nil, err
 	}
-	pkScriptLength, err := decodeVarInt(r)
+	pkScriptLength, err := DecodeVarInt(r)
 	if err != nil {
 		return nil, err
 	}
@@ -387,7 +387,7 @@ func decodeTxOut(r io.Reader) (*TxOut, error) {
 func (t *TxWitness) Encode() ([]byte, error) {
 	buffer := new(bytes.Buffer)
 
-	componentsCountEncoded, err := VarInt(len(t.ComponentDataList)).encode()
+	componentsCountEncoded, err := VarInt(len(t.ComponentDataList)).Encode()
 	if err != nil {
 		return nil, err
 	}
@@ -396,7 +396,7 @@ func (t *TxWitness) Encode() ([]byte, error) {
 		return nil, err
 	}
 	for _, componentData := range t.ComponentDataList {
-		componentDataLengthEncoded, err := VarInt(len(componentData)).encode()
+		componentDataLengthEncoded, err := VarInt(len(componentData)).Encode()
 		if err != nil {
 			return nil, err
 		}
@@ -415,13 +415,13 @@ func (t *TxWitness) Encode() ([]byte, error) {
 
 func decodeTxWitness(r io.Reader) (*TxWitness, error) {
 	t := TxWitness{}
-	componentsCount, err := decodeVarInt(r)
+	componentsCount, err := DecodeVarInt(r)
 	if err != nil {
 		return nil, err
 	}
 	t.ComponentDataList = make([]ComponentData, componentsCount)
 	for i := range componentsCount {
-		componentDataLength, err := decodeVarInt(r)
+		componentDataLength, err := DecodeVarInt(r)
 		if err != nil {
 			return nil, err
 		}

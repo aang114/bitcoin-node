@@ -6,9 +6,10 @@ import (
 	"io"
 )
 
+// https://en.bitcoin.it/wiki/Protocol_documentation#Variable_length_integer
 type VarInt uint64
 
-func (v VarInt) encode() ([]byte, error) {
+func (v VarInt) Encode() ([]byte, error) {
 	buffer := new(bytes.Buffer)
 
 	if v < 0xFD {
@@ -46,7 +47,7 @@ func (v VarInt) encode() ([]byte, error) {
 }
 
 // https://en.bitcoin.it/wiki/Protocol_documentation#Variable_length_integer
-func decodeVarInt(r io.Reader) (VarInt, error) {
+func DecodeVarInt(r io.Reader) (VarInt, error) {
 	buf := make([]byte, 1)
 	_, err := io.ReadFull(r, buf)
 	if err != nil {
