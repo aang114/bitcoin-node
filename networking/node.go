@@ -1,6 +1,7 @@
 package networking
 
 import (
+	"bufio"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -307,12 +308,13 @@ func (n *Node) saveBlocksToDisk() error {
 		return err
 	}
 	defer f.Close()
+	w := bufio.NewWriter(f)
 
 	blocksCountEncoded, err := message.VarInt(len(blocks)).Encode()
 	if err != nil {
 		return err
 	}
-	_, err = f.Write(blocksCountEncoded)
+	_, err = w.Write(blocksCountEncoded)
 	if err != nil {
 		return err
 	}
@@ -322,12 +324,13 @@ func (n *Node) saveBlocksToDisk() error {
 		if err != nil {
 			return err
 		}
-		_, err = f.Write(blockEncoded)
+		_, err = w.Write(blockEncoded)
 		if err != nil {
 			return err
 		}
 	}
 
+	err = w.Flush()
 	if err != nil {
 		return err
 	}
@@ -341,14 +344,15 @@ func (n *Node) readBlocksFromDisk() error {
 		return err
 	}
 	defer f.Close()
+	r := bufio.NewReader(f)
 
-	blocksCount, err := message.DecodeVarInt(f)
+	blocksCount, err := message.DecodeVarInt(r)
 	if err != nil {
 		return err
 	}
 	blocks := make([]*message.BlockPayload, blocksCount)
 	for i := range blocksCount {
-		block, err := message.DecodeBlockPayload(f)
+		block, err := message.DecodeBlockPayload(r)
 		if err != nil {
 			return err
 		}
