@@ -137,6 +137,7 @@ func (n *Node) Quit() {
 	}
 	n.HasQuit = true
 
+	// TODO - All peers might not be quit if there is is another goroutine that is adding peers while this goroutine is running
 	for _, peer := range n.peers.Keys() {
 		peer.Quit()
 	}
