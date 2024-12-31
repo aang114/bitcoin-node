@@ -2,7 +2,7 @@
 
 ## Solution
 
-This repository contains a proof-of-concept Go implementation of a Bitcoin Node, where the first 3 [milestones](#Milestone) of the task are completed. This node is also able to gracefully shutdown. Furthemore, it stores all its received blocks to disk while shutting down and also reads from disk for blocks while starting up.
+This repository contains a proof-of-concept Go implementation of a Bitcoin Node, where the first 3 [milestones](#Milestones) have been completed. This node is also able to gracefully shutdown. Furthermore, it stores all its received blocks to disk while shutting down and also reads from disk for blocks while starting up.
 
 ### Running the Node
 
