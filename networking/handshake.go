@@ -164,6 +164,7 @@ func exchangeWtxidrelayMessage(conn *net.TCPConn) error {
 func PerformHandshake(remoteAddr *net.TCPAddr, tcpTimeout time.Duration, services message.Services, receivingServices message.Services) (*net.TCPConn, error) {
 	log.Printf("🤝 Performing handshake with peer %s", remoteAddr.String())
 	//conn, err := net.DialTCP("tcp", nil, &remoteAddr)
+	// TODO - Improve (Currently, the node uses a different TCP address for each new connection. A Bitcoin node should only have one TCP address)
 	connI, err := net.DialTimeout("tcp", remoteAddr.String(), tcpTimeout)
 	if err != nil {
 		return nil, err
