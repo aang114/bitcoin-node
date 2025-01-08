@@ -2,7 +2,6 @@ package networking
 
 import (
 	"bufio"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"github.com/aang114/bitcoin-node/constants"
@@ -233,7 +232,7 @@ func (n *Node) requestForNewBlocks() error {
 			return err
 		}
 	}
-	log.Printf("sending getblocks message with latest block 0x%s", hex.EncodeToString(latestBlockHash[:]))
+	log.Printf("sending getblocks message with latest block %s", latestBlockHash.String())
 	zeroBlockHash := message.Hash256{}
 	randomPeer, ok := n.peers.GetRandomKey()
 	if !ok {
@@ -272,7 +271,7 @@ func (n *Node) handleBlockMsg(msg *BlockPayloadWithSender) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("Received Block 0x%s from peer %s", hex.EncodeToString(blockHash[:]), msg.Sender.conn.RemoteAddr())
+	log.Printf("Received Block %s from peer %s", blockHash.String(), msg.Sender.conn.RemoteAddr())
 	err = n.addBlockToNode(msg.BlockPayload)
 	if err != nil {
 		return err
@@ -512,7 +511,7 @@ func (n *Node) addBlockToNode(block *message.BlockPayload) error {
 	n.blockHashes.Set(blockHash, struct{}{})
 	n.blocks.Append(block)
 
-	log.Printf("️➕ Added block 0x%s to node", hex.EncodeToString(blockHash[:]))
+	log.Printf("️➕ Added block %s to node", blockHash.String())
 
 	return nil
 }

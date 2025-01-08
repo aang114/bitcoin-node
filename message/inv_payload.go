@@ -3,13 +3,22 @@ package message
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/hex"
 	"errors"
 	"io"
+	"slices"
 )
 
 const maxInvCount = 50_000
 
-type Hash256 = [32]byte
+// Hash256 is a 256-bit number that is stored in little-endian byte order (https://en.bitcoin.it/wiki/Block_hashing_algorithm#Endianess)
+type Hash256 [32]byte
+
+// Returns the big-endian hexadecimal representation
+func (h Hash256) String() string {
+	slices.Reverse(h[:])
+	return hex.EncodeToString(h[:])
+}
 
 type InventoryType uint32
 
